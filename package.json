@@ -6,13 +6,14 @@
   "scripts": {
     "dev": "yarn build:w & yarn serve:w",
     "build": "tsc",
-    "build:w": "pm2 start 'tsc --watch' --name tsc",
+    "build:w": "tsc --watch",
     "serve": "pm2 start dist/app.js --name app",
     "serve:w": "pm2 start dist/app.js --name app --watch",
     "stop": "pm2 stop app & pm2 stop tsc",
     "delete": "pm2 delete app & pm2 delete tsc"
   },
   "dependencies": {
+    "body-parser": "^1.18.3",
     "express": "^4.16.4"
   },
   "devDependencies": {
