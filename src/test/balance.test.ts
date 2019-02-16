@@ -5,14 +5,10 @@ describe("POST /v1/balances", () => {
   it("should response 200 OK", async done => {
     const res = await request(app)
       .post("/v1/balances")
-      .send({
-        balanceId: "foobar",
-        amount: 2000
-      });
+      .send({ balanceId: "foobar", amount: 2000 });
     expect(res.status).toBe(200);
     expect(res.body.balance.id).toBe("foobar");
-    expect(res.body.balance.id).toBe("foobar");
-    expect(res.body.balance.amount).toBeGreaterThanOrEqual(0);
+    expect(res.body.balance.amount).toBe(2000);
     expect(new Date(res.body.balance.createdAt).getTime()).toBeLessThan(
       new Date().getTime()
     );
