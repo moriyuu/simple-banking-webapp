@@ -4,6 +4,7 @@
   "author": "moriyuu",
   "license": "MIT",
   "scripts": {
+    "test": "jest --detectOpenHandles",
     "build": "tsc",
     "build:w": "tsc --watch",
     "serve": "pm2 start dist/server.js --name app",
@@ -17,7 +18,15 @@
   },
   "devDependencies": {
     "@types/express": "^4.16.1",
+    "@types/jest": "^24.0.5",
+    "@types/supertest": "^2.0.7",
+    "jest": "^24.1.0",
     "pm2": "^3.2.9",
+    "supertest": "^3.4.2",
+    "ts-jest": "^23.10.5",
     "typescript": "^3.3.3"
+  },
+  "jest": {
+    "preset": "ts-jest"
   }
 }
