@@ -40,16 +40,21 @@ afterAll(async () => {
 
 describe("POST /v1/deposits", () => {
   it("should response 200 OK", async done => {
-    const res = await request(app)
+    const depositRes = await request(app)
       .post("/v1/deposits")
       .send({ balanceId: TEST_BALANCE_ID, amount: 25000 });
-    expect(res.status).toBe(200);
-    expect(res.body.deposit.id).not.toBeUndefined();
-    expect(res.body.deposit.balanceId).toBe(TEST_BALANCE_ID);
-    expect(res.body.deposit.amount).toBe(25000);
-    expect(new Date(res.body.deposit.createdAt).getTime()).toBeLessThan(
+    expect(depositRes.status).toBe(200);
+    expect(depositRes.body.deposit.id).not.toBeUndefined();
+    expect(depositRes.body.deposit.balanceId).toBe(TEST_BALANCE_ID);
+    expect(depositRes.body.deposit.amount).toBe(25000);
+    expect(new Date(depositRes.body.deposit.createdAt).getTime()).toBeLessThan(
       new Date().getTime()
     );
+    const balanceRes = await request(app).get(
+      `/v1/balances/${TEST_BALANCE_ID}`
+    );
+    expect(balanceRes.status).toBe(200);
+    expect(balanceRes.body.balance.amount).toBe(TEST_BALANCE.amount + 25000);
     done();
   });
 
