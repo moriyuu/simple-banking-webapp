@@ -16,7 +16,7 @@ export const createBalance = async (
     const doc: Balance = {
       id: body.balanceId,
       amount: body.amount,
-      createdAt: new Date(0)
+      createdAt: new Date()
     };
     await balancesRef
       .doc(body.balanceId + "")
