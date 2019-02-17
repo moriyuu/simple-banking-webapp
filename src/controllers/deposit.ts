@@ -113,22 +113,24 @@ export const showDeposit = async (
   try {
     const { depositId } = req.params;
 
+    // Fetch data from firestore
     const docs = await depositsRef
       .where("id", "==", depositId)
       .get()
-      .then(snapshot => {
-        return snapshot.docs;
-      })
       .catch(() => {
         throw { status: 500, code: "Failed to read data" };
+      })
+      .then(snapshot => {
+        return snapshot.docs.map(doc => doc.data());
       });
 
+    // Check if the deposit is exist
     if (!docs[0]) {
       throw { status: 404, code: "Deposit not found" };
     }
 
-    const doc = docs[0].data();
-
+    // Response
+    const doc = docs[0];
     const result: DepositShowResponseBody = {
       deposit: {
         id: depositId,
