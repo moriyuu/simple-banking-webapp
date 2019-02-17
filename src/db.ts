@@ -7,5 +7,8 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+const depositsRef = db.collection("deposits");
+const balancesRef = db.collection("balances");
 
 export default db;
+export { depositsRef, balancesRef };

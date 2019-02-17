@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { Balance } from "../models";
-import db from "../db";
-
-const balancesRef = db.collection("balances");
+import { balancesRef } from "../db";
 
 /**
  * Create a new balance

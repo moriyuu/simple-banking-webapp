@@ -1,9 +1,8 @@
 import request from "supertest";
 import app from "../app";
-import db from "../db";
+import { balancesRef } from "../db";
 import { Balance } from "../models";
 
-const balancesRef = db.collection("balances");
 const TEST_BALANCE_ID = "TEST_BALANCE_ID";
 const TEST_BALANCE_ID2 = "TEST_BALANCE_ID2";
 

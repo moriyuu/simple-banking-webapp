@@ -1,10 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import shortid from "shortid";
 import { Deposit } from "../models";
-import db from "../db";
-
-const depositsRef = db.collection("deposits");
-const balancesRef = db.collection("balances");
+import { depositsRef, balancesRef } from "../db";
 
 /**
  * Deposit some amount of money to a balance
