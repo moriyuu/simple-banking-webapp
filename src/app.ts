@@ -15,6 +15,9 @@ app.get("/v1/deposits", depositController.listDeposits);
 app.get("/v1/deposits/:depositId", depositController.showDeposit);
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (!(err.status && err.code)) {
+    err = { status: 500, code: "Internal server error" };
+  }
   res.status(err.status).json({ status: err.status, code: err.code });
 });
 
