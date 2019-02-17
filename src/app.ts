@@ -8,6 +8,11 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  next();
+});
+
 app.post("/v1/balances", balanceController.createBalance);
 app.get("/v1/balances/:balanceId", balanceController.showBalance);
 app.post("/v1/deposits", depositController.createDeposit);
