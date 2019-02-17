@@ -61,5 +61,6 @@
     // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
     "resolveJsonModule": true
   },
-  "exclude": ["**/*.test.ts"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts"],
+  "include": ["src", "**/serviceAccountKey.json"]
 }
