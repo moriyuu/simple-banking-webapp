@@ -27,6 +27,9 @@
     "typescript": "^3.3.3"
   },
   "jest": {
-    "preset": "ts-jest"
+    "preset": "ts-jest",
+    "testMatch": [
+      "**/test/**/*.test.ts"
+    ]
   }
 }
