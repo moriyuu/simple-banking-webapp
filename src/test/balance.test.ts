@@ -1,18 +1,19 @@
 import request from "supertest";
+import shortid from "shortid";
 import app from "../app";
 import { balancesRef } from "../db";
 import { Balance } from "../models";
 
-const TEST_BALANCE_ID = "TEST_BALANCE_ID";
-const TEST_BALANCE_ID2 = "TEST_BALANCE_ID2";
+const TEST_BALANCE_ID = "TEST_BALANCE_ID_" + shortid.generate();
+const TEST_BALANCE_ID2 = "TEST_BALANCE_ID_" + shortid.generate();
 
-beforeAll(() => {
+beforeAll(async () => {
   const doc: Balance = {
     id: TEST_BALANCE_ID,
     amount: 10000,
     createdAt: new Date()
   };
-  return balancesRef.doc(TEST_BALANCE_ID).set(doc);
+  return balancesRef.doc(TEST_BALANCE_ID).create(doc);
 });
 
 afterAll(() => {
