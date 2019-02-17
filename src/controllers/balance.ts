@@ -55,22 +55,24 @@ export const showBalance = async (
   try {
     const { balanceId } = req.params;
 
+    // Fetch data from firestore
     const docs = await balancesRef
       .where("id", "==", balanceId)
       .get()
-      .then(snapshot => {
-        return snapshot.docs;
-      })
       .catch(() => {
         throw { status: 500, code: "Failed to read data" };
+      })
+      .then(snapshot => {
+        return snapshot.docs.map(doc => doc.data());
       });
 
+    // Check if the balance is exist
     if (!docs[0]) {
       throw { status: 404, code: "Balance not found" };
     }
 
-    const doc = docs[0].data();
-
+    // Response
+    const doc = docs[0];
     const result: BalanceShowResponseBody = {
       balance: {
         id: balanceId,
