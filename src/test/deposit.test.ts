@@ -1,22 +1,41 @@
 import request from "supertest";
 import shortid from "shortid";
 import app from "../app";
-import { balancesRef } from "../db";
-import { Balance } from "../models";
+import { balancesRef, depositsRef } from "../db";
+import { Balance, Deposit } from "../models";
 
 const TEST_BALANCE_ID = "TEST_BALANCE_ID_" + shortid.generate();
+const TEST_BALANCE: Balance = {
+  id: TEST_BALANCE_ID,
+  amount: 10000,
+  createdAt: new Date()
+};
+const TEST_DEPOSIT_ID = "TEST_DEPOSIT_ID_" + shortid.generate();
+const TEST_DEPOSIT: Deposit = {
+  id: TEST_DEPOSIT_ID,
+  balanceId: TEST_BALANCE_ID,
+  amount: 1000,
+  createdAt: new Date()
+};
 
-beforeAll(() => {
-  const doc: Balance = {
-    id: TEST_BALANCE_ID,
-    amount: 10000,
-    createdAt: new Date()
-  };
-  return balancesRef.doc(TEST_BALANCE_ID).create(doc);
+beforeAll(async () => {
+  await balancesRef.doc(TEST_BALANCE_ID).create(TEST_BALANCE);
+  return depositsRef.doc(TEST_DEPOSIT_ID).create(TEST_DEPOSIT);
 });
 
-afterAll(() => {
-  return balancesRef.doc(TEST_BALANCE_ID).delete();
+afterAll(async () => {
+  const deposits = await depositsRef
+    .where("balanceId", "==", TEST_BALANCE_ID)
+    .get()
+    .then(snapshot => {
+      return snapshot.docs.map(doc => doc.data());
+    });
+
+  return Promise.all([
+    balancesRef.doc(TEST_BALANCE_ID).delete(),
+    depositsRef.doc(TEST_DEPOSIT_ID).delete(),
+    ...deposits.map(deposit => depositsRef.doc(deposit.id).delete())
+  ]);
 });
 
 describe("POST /v1/deposits", () => {
@@ -33,39 +52,62 @@ describe("POST /v1/deposits", () => {
     );
     done();
   });
+
+  it("should response 400 Invalid amount", async done => {
+    const res = await request(app)
+      .post("/v1/deposits")
+      .send({ balanceId: TEST_BALANCE_ID, amount: -1000 });
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe("Invalid amount");
+    done();
+  });
+
+  it("should response 404 Balance not found", async done => {
+    const res = await request(app)
+      .post("/v1/deposits")
+      .send({ balanceId: TEST_BALANCE_ID + "_FOO", amount: 10000 });
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe("Balance not found");
+    done();
+  });
 });
 
 describe("GET /v1/deposits", () => {
   it("should response 200 OK", async done => {
     const res = await request(app).get("/v1/deposits");
     expect(res.status).toBe(200);
-    expect(res.body.deposits[0].id).toBe("valid-balanceId");
-    expect(res.body.deposits[0].amount).toBeGreaterThanOrEqual(0);
-    expect(new Date(res.body.deposits[0].createdAt).getTime()).toBeLessThan(
-      new Date().getTime()
-    );
+    expect(
+      res.body.deposits.find(
+        (deposit: Deposit) => deposit.id === TEST_DEPOSIT_ID
+      )
+    ).toMatchObject({
+      id: TEST_DEPOSIT.id,
+      balanceId: TEST_DEPOSIT.balanceId,
+      amount: TEST_DEPOSIT.amount
+    });
     done();
   });
 });
 
 describe("GET /v1/deposits/:depositId", () => {
   it("should response 200 OK", async done => {
-    const depositId = "valid-depositId";
-    const res = await request(app).get(`/v1/deposits/${depositId}`);
+    const res = await request(app).get(`/v1/deposits/${TEST_DEPOSIT.id}`);
     expect(res.status).toBe(200);
-    expect(res.body.deposit.id).toBe("valid-depositId");
-    expect(res.body.deposit.balanceId).toBe("valid-balanceId");
-    expect(res.body.deposit.amount).toBeGreaterThanOrEqual(0);
-    expect(new Date(res.body.deposit.createdAt).getTime()).toBeLessThan(
-      new Date().getTime()
+    expect(res.body.deposit.id).toBe(TEST_DEPOSIT.id);
+    expect(res.body.deposit.balanceId).toBe(TEST_DEPOSIT.balanceId);
+    expect(res.body.deposit.amount).toBe(TEST_DEPOSIT.amount);
+    expect(new Date(res.body.deposit.createdAt).getTime()).toBe(
+      TEST_DEPOSIT.createdAt.getTime()
     );
     done();
   });
 
-  it("should response 404 Not Found", async done => {
-    const depositId = "nonexistent-depositId";
-    const res = await request(app).get(`/v1/deposits/${depositId}`);
+  it("should response 404 Deposit not found", async done => {
+    const res = await request(app).get(
+      `/v1/deposits/${TEST_DEPOSIT_ID + "_FOO"}`
+    );
     expect(res.status).toBe(404);
+    expect(res.body.code).toBe("Deposit not found");
     done();
   });
 });
