@@ -70,13 +70,29 @@ interface DepositCreateResponseBody {
 /**
  * List all deposits
  */
-export const listDeposits = (
+export const listDeposits = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const result: DepositListResponseBody = { deposits: [] };
+    const docs = await depositsRef
+      .get()
+      .catch(() => {
+        throw { status: 500, code: "Failed to read data" };
+      })
+      .then(snapshot => {
+        return snapshot.docs.map(doc => doc.data());
+      });
+
+    const result: DepositListResponseBody = {
+      deposits: docs.map(doc => ({
+        id: doc.id,
+        balanceId: doc.balanceId,
+        amount: doc.amount,
+        createdAt: doc.createdAt.toDate()
+      }))
+    };
     res.json(result);
   } catch (err) {
     next(err);
