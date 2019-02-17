@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import shortid from "shortid";
-import { Deposit } from "../models";
-import { depositsRef, balancesRef } from "../db";
+import { Deposit, Balance } from "../models";
+import db, { depositsRef, balancesRef } from "../db";
 
 /**
  * Deposit some amount of money to a balance
@@ -19,38 +19,39 @@ export const createDeposit = async (
       throw { status: 400, code: "Invalid amount" };
     }
 
-    // Check if the balance is exist
-    await balancesRef
-      .where("id", "==", body.balanceId)
-      .get()
-      .catch(() => {
-        throw { status: 500, code: "Failed to read balance data!" };
-      })
-      .then(snapshot => {
-        if (!snapshot.docs.length) {
-          throw { status: 404, code: "Balance not found" };
-        }
-      });
+    // Manipulate firestore using transaction
+    const deposit = await db.runTransaction(async t => {
+      const balance = await t
+        .get(balancesRef.doc(body.balanceId + ""))
+        .then(doc => doc.data() as Balance);
 
-    // Define a document
-    const id = shortid.generate();
-    const doc: Deposit = {
-      id,
-      balanceId: body.balanceId,
-      amount: body.amount,
-      createdAt: new Date()
-    };
+      // Check if the balance is exist
+      if (!balance) {
+        throw { status: 404, code: "Balance not found" };
+      }
 
-    // Insert into firestore
-    await depositsRef
-      .doc(id)
-      .create(doc)
-      .catch(() => {
-        throw { status: 500, code: "Failed to create data" };
-      });
+      // Create deposit data into firestore
+      const id = shortid.generate();
+      const deposit: Deposit = {
+        id,
+        balanceId: body.balanceId,
+        amount: body.amount,
+        createdAt: new Date()
+      };
+      t.create(depositsRef.doc(id), deposit);
+
+      // Update balance data in firestore
+      const newBalance: Balance = {
+        ...balance,
+        amount: balance.amount + body.amount
+      };
+      t.update(balancesRef.doc(newBalance.id + ""), newBalance);
+
+      return deposit;
+    });
 
     // Response
-    const result: DepositCreateResponseBody = { deposit: doc };
+    const result: DepositCreateResponseBody = { deposit };
     res.json(result);
   } catch (err) {
     next(err);
