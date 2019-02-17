@@ -75,8 +75,12 @@ export const listDeposits = (
   res: Response,
   next: NextFunction
 ) => {
-  const result: DepositListResponseBody = { deposits: [] };
-  res.json(result);
+  try {
+    const result: DepositListResponseBody = { deposits: [] };
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
 };
 interface DepositListResponseBody {
   deposits: Deposit[];
@@ -85,21 +89,42 @@ interface DepositListResponseBody {
 /**
  * Show a specific deposit
  */
-export const showDeposit = (
+export const showDeposit = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const { depositId } = req.params;
-  const result: DepositShowResponseBody = {
-    deposit: {
-      id: depositId,
-      balanceId: "bid",
-      amount: 1000,
-      createdAt: new Date()
+  try {
+    const { depositId } = req.params;
+
+    const docs = await depositsRef
+      .where("id", "==", depositId)
+      .get()
+      .then(snapshot => {
+        return snapshot.docs;
+      })
+      .catch(() => {
+        throw { status: 500, code: "Failed to read data" };
+      });
+
+    if (!docs[0]) {
+      throw { status: 404, code: "Deposit not found" };
     }
-  };
-  res.json(result);
+
+    const doc = docs[0].data();
+
+    const result: DepositShowResponseBody = {
+      deposit: {
+        id: depositId,
+        balanceId: doc.balanceId,
+        amount: doc.amount,
+        createdAt: doc.createdAt.toDate()
+      }
+    };
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
 };
 interface DepositShowResponseBody {
   deposit: Deposit;
